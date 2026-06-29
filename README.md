@@ -1,14 +1,15 @@
-# Find IONIQ 5
+# Find the IONIQ 5
 
-A browser game inspired by “Where's Waldo?”: find the Hyundai IONIQ 5 hidden among many colourful car-like SVG/DOM vehicles.
+A browser game inspired by *Where's Waldo?*: find the hidden Hyundai IONIQ 5 among hundreds of colorful generated cars.
 
 ## Features
 
-- Random board every round: position, rotation, scale, colours, and decoys change each time.
-- The target is not a static photo; all vehicles are generated as DOM/SVG-like CSS drawings.
-- Timer-based scoring.
-- Leaderboard API with Vercel Blob persistence when `BLOB_READ_WRITE_TOKEN` is configured.
-- Local/in-memory fallback for development.
+- Randomized city-lot layout every round
+- Generated SVG/CSS vehicles, not a single static image
+- Distinct IONIQ 5 target with pixel lamps and angular EV shape
+- Timer and local leaderboard saved in `localStorage`
+- Difficulty levels controlling crowd density
+- Responsive playfield for desktop and mobile
 
 ## Run locally
 
@@ -17,10 +18,12 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+## Build
 
-## Deploy
+```bash
+npm run build
+```
 
-This app is optimized for Vercel.
+## Notes
 
-For persistent global leaderboard, create a Vercel Blob store and set `BLOB_READ_WRITE_TOKEN` in the Vercel project environment variables. Without it, the game still works but leaderboard persistence depends on local/session fallback.
+The leaderboard is local-device based. A shared global leaderboard can be added later with a database-backed API such as Vercel Postgres, Supabase, or Upstash Redis.
