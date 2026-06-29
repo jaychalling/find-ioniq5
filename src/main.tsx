@@ -161,6 +161,12 @@ function vehicleFootprint(scale: number, difficulty: Difficulty) {
   return { x: 4.9 * scale * squeeze, y: 6.5 * scale * squeeze };
 }
 
+function depthScale(y: number) {
+  // Make the parking lot read as a tilted plane: far rows are smaller,
+  // near rows are larger. Clamp keeps target/fake EVs still clickable.
+  return 0.72 + Math.min(1, Math.max(0, y / 100)) * 0.56;
+}
+
 function vehiclesOverlap(a: { x: number; y: number; scale: number }, b: { x: number; y: number; scale: number }, difficulty: Difficulty) {
   const af = vehicleFootprint(a.scale, difficulty);
   const bf = vehicleFootprint(b.scale, difficulty);
@@ -316,6 +322,8 @@ function CarSvg({ car, found, onPick }: { car: Vehicle; found: boolean; onPick: 
   const isTarget = car.kind === 'target';
   const isNearMiss = car.kind === 'ioniq-like';
   const label = isTarget ? 'Hyundai IONIQ 5 target' : isNearMiss ? 'IONIQ-like distractor' : `${car.kind} car`;
+  const depth = depthScale(car.y);
+  const visualScale = car.scale * depth;
 
   return (
     <button
@@ -326,8 +334,11 @@ function CarSvg({ car, found, onPick }: { car: Vehicle; found: boolean; onPick: 
       style={{
         left: `${car.x}%`,
         top: `${car.y}%`,
-        transform: `translate(-50%, -50%) rotate(${car.rotation}deg) scale(${car.scale}) ${car.mirror ? 'scaleX(-1)' : ''}`,
+        transform: `translate(-50%, -50%) rotate(${car.rotation}deg) scale(${visualScale}) ${car.mirror ? 'scaleX(-1)' : ''}`,
         zIndex: Math.round(car.y * 10) + 20,
+        ['--depth' as string]: depth,
+        ['--shadow-y' as string]: `${Math.round(4 + depth * 7)}px`,
+        ['--shadow-blur' as string]: `${Math.round(5 + depth * 6)}px`,
       }}
     >
       <img className="car-sprite" src={car.asset} alt="" draggable={false} />
