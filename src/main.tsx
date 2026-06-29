@@ -5,7 +5,7 @@ import './styles.css';
 type Difficulty = 'easy' | 'normal' | 'hard';
 type VehicleKind = 'sedan' | 'hatch' | 'van' | 'truck' | 'taxi' | 'bus' | 'ioniq-like' | 'target';
 type PropKind = 'cone' | 'person' | 'charger' | 'sign' | 'cart' | 'tree' | 'crosswalk';
-type ZoneName = 'charging' | 'market' | 'avenue' | 'parking' | 'alley' | 'intersection';
+type ZoneName = 'north-lot' | 'mid-lot' | 'south-lot' | 'entrance' | 'charger-row' | 'market-row';
 
 type DifficultyConfig = {
   label: string;
@@ -55,19 +55,43 @@ type Zone = {
   lane?: boolean;
 };
 
+type ParkingSlot = {
+  id: string;
+  zone: ZoneName;
+  x: number;
+  y: number;
+  rotation: number;
+  row: number;
+  col: number;
+  priority: number;
+};
+
 const DIFFICULTY: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'Easy', cars: 40, nearMisses: 2, clutter: 8, targetScale: 0.98, missPenalty: 350, hintPenalty: 2200, hint: '깔끔한 입문' },
-  normal: { label: 'Normal', cars: 62, nearMisses: 6, clutter: 14, targetScale: 0.9, missPenalty: 450, hintPenalty: 3200, hint: '왈도풍 밀도' },
-  hard: { label: 'Hard', cars: 92, nearMisses: 12, clutter: 22, targetScale: 0.84, missPenalty: 650, hintPenalty: 4800, hint: '비슷한 EV 많음' },
+  easy: { label: 'Easy', cars: 40, nearMisses: 2, clutter: 8, targetScale: 0.88, missPenalty: 350, hintPenalty: 2200, hint: '깔끔한 입문' },
+  normal: { label: 'Normal', cars: 62, nearMisses: 6, clutter: 14, targetScale: 0.78, missPenalty: 450, hintPenalty: 3200, hint: '왈도풍 밀도' },
+  hard: { label: 'Hard', cars: 84, nearMisses: 12, clutter: 20, targetScale: 0.72, missPenalty: 650, hintPenalty: 4800, hint: '비슷한 EV 많음' },
 };
 
 const ZONES: Zone[] = [
-  { name: 'charging', x: [4, 31], y: [7, 34], rotation: [-8, 10], weight: 1.05 },
-  { name: 'market', x: [5, 36], y: [56, 91], rotation: [-21, -7], weight: 1.0 },
-  { name: 'avenue', x: [35, 74], y: [12, 86], rotation: [3, 8], weight: 1.7, lane: true },
-  { name: 'parking', x: [70, 96], y: [8, 53], rotation: [14, 28], weight: 1.15 },
-  { name: 'alley', x: [62, 95], y: [61, 91], rotation: [-18, 17], weight: 0.95 },
-  { name: 'intersection', x: [38, 66], y: [39, 61], rotation: [-32, 32], weight: 0.65 },
+  { name: 'charger-row', x: [5, 31], y: [8, 30], rotation: [-4, 5], weight: 0.9 },
+  { name: 'north-lot', x: [34, 95], y: [8, 36], rotation: [-3, 4], weight: 1.35 },
+  { name: 'mid-lot', x: [6, 94], y: [38, 64], rotation: [-3, 4], weight: 1.55 },
+  { name: 'south-lot', x: [6, 94], y: [66, 91], rotation: [-3, 4], weight: 1.45 },
+  { name: 'market-row', x: [5, 31], y: [70, 91], rotation: [-4, 5], weight: 0.8 },
+  { name: 'entrance', x: [41, 61], y: [47, 56], rotation: [-10, 10], weight: 0.35, lane: true },
+];
+
+const PARKING_ROWS = [
+  { zone: 'charger-row' as ZoneName, y: 15, xs: [9, 16, 23, 30], rotation: 0, priority: 0.96 },
+  { zone: 'charger-row' as ZoneName, y: 27, xs: [9, 16, 23, 30], rotation: 0, priority: 0.9 },
+  { zone: 'north-lot' as ZoneName, y: 12, xs: [42, 49, 56, 63, 70, 77, 84, 91], rotation: 0, priority: 1.0 },
+  { zone: 'north-lot' as ZoneName, y: 24, xs: [39, 46, 53, 60, 67, 74, 81, 88, 95], rotation: 0, priority: 0.98 },
+  { zone: 'north-lot' as ZoneName, y: 35, xs: [42, 49, 56, 63, 70, 77, 84, 91], rotation: 0, priority: 0.96 },
+  { zone: 'mid-lot' as ZoneName, y: 43, xs: [10, 17, 24, 31, 38, 45, 52, 59, 66, 73, 80, 87], rotation: 0, priority: 1.0 },
+  { zone: 'mid-lot' as ZoneName, y: 55, xs: [13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90], rotation: 0, priority: 1.0 },
+  { zone: 'south-lot' as ZoneName, y: 69, xs: [10, 17, 24, 31, 38, 45, 52, 59, 66, 73, 80, 87], rotation: 0, priority: 0.99 },
+  { zone: 'south-lot' as ZoneName, y: 81, xs: [13, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90], rotation: 0, priority: 0.99 },
+  { zone: 'market-row' as ZoneName, y: 91, xs: [8, 15, 22, 29, 36], rotation: 0, priority: 0.86 },
 ];
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#64748b', '#111827', '#f8fafc', '#facc15', '#fb7185', '#2dd4bf', '#a3e635', '#38bdf8', '#cbd5e1', '#d1d5db'];
@@ -133,8 +157,8 @@ function distance(a: { x: number; y: number }, b: { x: number; y: number }) {
 }
 
 function vehicleFootprint(scale: number, difficulty: Difficulty) {
-  const squeeze = difficulty === 'hard' ? 0.96 : difficulty === 'normal' ? 1.08 : 1.2;
-  return { x: 5.3 * scale * squeeze, y: 7.0 * scale * squeeze };
+  const squeeze = difficulty === 'hard' ? 0.92 : difficulty === 'normal' ? 1.0 : 1.08;
+  return { x: 4.9 * scale * squeeze, y: 6.5 * scale * squeeze };
 }
 
 function vehiclesOverlap(a: { x: number; y: number; scale: number }, b: { x: number; y: number; scale: number }, difficulty: Difficulty) {
@@ -145,39 +169,50 @@ function vehiclesOverlap(a: { x: number; y: number; scale: number }, b: { x: num
   return dx < af.x + bf.x && dy < af.y + bf.y;
 }
 
-function findVehicleSpot(
-  vehicles: Vehicle[],
-  zoneCounts: Record<ZoneName, number>,
-  rand: () => number,
-  difficulty: Difficulty,
-  scale: number,
-  protectedTarget: boolean,
-) {
-  let best: { zone: Zone; point: { x: number; y: number }; score: number } | null = null;
-  const attempts = difficulty === 'hard' ? 140 : 180;
+function parkingSlots(rand: () => number, difficulty: Difficulty) {
+  const jitterX = difficulty === 'hard' ? 0.9 : difficulty === 'normal' ? 0.65 : 0.45;
+  const jitterY = difficulty === 'hard' ? 0.8 : difficulty === 'normal' ? 0.55 : 0.35;
+  const slots: ParkingSlot[] = [];
 
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const zone = weightedZone(rand);
-    const point = zoneSlot(zone, zoneCounts[zone.name] + attempt, rand, difficulty);
-    const candidate = { x: Math.min(96, Math.max(4, point.x)), y: Math.min(93, Math.max(6, point.y)), scale };
-    const blockers = vehicles.filter((other) => protectedTarget || other.kind === 'target' || other.kind === 'ioniq-like' || distance(candidate, other) < 18);
-    const collisions = blockers.filter((other) => vehiclesOverlap(candidate, other, difficulty));
+  PARKING_ROWS.forEach((row, rowIndex) => {
+    row.xs.forEach((x, col) => {
+      const edgePenalty = col === 0 || col === row.xs.length - 1 ? 0.04 : 0;
+      slots.push({
+        id: `${row.zone}-${rowIndex}-${col}`,
+        zone: row.zone,
+        x: x + (rand() - 0.5) * jitterX,
+        y: row.y + (rand() - 0.5) * jitterY,
+        rotation: row.rotation + (rand() - 0.5) * (difficulty === 'hard' ? 3.5 : 2.2),
+        row: rowIndex,
+        col,
+        priority: row.priority - edgePenalty + rand() * 0.08,
+      });
+    });
+  });
 
-    if (collisions.length === 0) {
-      zoneCounts[zone.name] += 1;
-      return { zone, point: candidate };
-    }
+  return slots.sort((a, b) => b.priority - a.priority || rand() - 0.5);
+}
 
+function pullSlot(slots: ParkingSlot[], vehicles: Vehicle[], rand: () => number, difficulty: Difficulty, protectedTarget: boolean) {
+  const windowSize = protectedTarget ? Math.min(28, slots.length) : Math.min(difficulty === 'hard' ? 24 : 18, slots.length);
+  let bestIndex = 0;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < windowSize; i += 1) {
+    const slot = slots[i];
+    const candidate = { x: slot.x, y: slot.y, scale: protectedTarget ? 0.72 : 0.56 };
+    const blockers = vehicles.filter((other) => protectedTarget || other.kind === 'target' || other.kind === 'ioniq-like');
+    const collisions = blockers.filter((other) => vehiclesOverlap(candidate, other, difficulty)).length;
     const nearest = blockers.reduce((min, other) => Math.min(min, distance(candidate, other)), Number.POSITIVE_INFINITY);
-    const score = collisions.length * 100 - nearest;
-    if (!best || score < best.score) best = { zone, point: candidate, score };
+    const randomness = rand() * 0.35;
+    const score = collisions * 100 - nearest * 0.18 + i * 0.18 + randomness;
+    if (score < bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
   }
 
-  // Dense hard boards can exhaust perfect slots. Use the least-bad slot instead
-  // of stacking every failed candidate in one zone.
-  const fallback = best ?? { zone: weightedZone(rand), point: { x: 50, y: 50, scale }, score: 0 };
-  zoneCounts[fallback.zone.name] += 1;
-  return { zone: fallback.zone, point: fallback.point };
+  return slots.splice(bestIndex, 1)[0] ?? { id: 'fallback', zone: 'mid-lot' as ZoneName, x: 50, y: 50, rotation: 0, row: 0, col: 0, priority: 0 };
 }
 
 function zoneSlot(zone: Zone, index: number, rand: () => number, difficulty: Difficulty) {
@@ -189,7 +224,7 @@ function zoneSlot(zone: Zone, index: number, rand: () => number, difficulty: Dif
   const row = Math.floor(index / cols) % rows;
   const cellW = width / cols;
   const cellH = height / rows;
-  const jitter = difficulty === 'hard' ? 0.34 : 0.25;
+  const jitter = difficulty === 'hard' ? 0.22 : 0.16;
 
   return {
     x: zone.x[0] + cellW * (col + 0.5) + (rand() - 0.5) * cellW * jitter,
@@ -204,7 +239,8 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
   const kinds: VehicleKind[] = ['sedan', 'hatch', 'van', 'truck', 'taxi', 'bus'];
   const targetIndex = Math.floor(rand() * config.cars);
   const nearMissSlots = new Set<number>();
-  const zoneCounts: Record<ZoneName, number> = { charging: 0, market: 0, avenue: 0, parking: 0, alley: 0, intersection: 0 };
+  const zoneCounts: Record<ZoneName, number> = { 'north-lot': 0, 'mid-lot': 0, 'south-lot': 0, entrance: 0, 'charger-row': 0, 'market-row': 0 };
+  const slots = parkingSlots(rand, difficulty);
 
   while (nearMissSlots.size < config.nearMisses) {
     const slot = Math.floor(rand() * config.cars);
@@ -215,22 +251,22 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
     const isTarget = i === targetIndex;
     const nearMiss = nearMissSlots.has(i);
     const kind: VehicleKind = isTarget ? 'target' : nearMiss ? 'ioniq-like' : pick(kinds, rand);
-    const scale = isTarget ? config.targetScale : nearMiss ? 0.78 + rand() * 0.12 : 0.5 + rand() * 0.16;
-    const { zone, point } = findVehicleSpot(vehicles, zoneCounts, rand, difficulty, scale, isTarget || nearMiss);
-    const laneRotation = zone.lane ? pick([3, 6, 183, 186], rand) + (rand() - 0.5) * 4 : between(zone.rotation, rand);
+    const scale = isTarget ? config.targetScale : nearMiss ? 0.62 + rand() * 0.08 : 0.5 + rand() * 0.08;
+    const slot = pullSlot(slots, vehicles, rand, difficulty, isTarget || nearMiss);
+    const rotation = slot.rotation + (isTarget ? 0 : (rand() - 0.5) * 1.8);
     const asset = vehicleAsset(kind, rand);
 
     vehicles.push({
       id: isTarget ? 'ioniq5-target' : `car-${i}`,
       kind,
-      x: point.x,
-      y: point.y,
-      rotation: laneRotation,
+      x: slot.x,
+      y: slot.y,
+      rotation,
       scale,
       color: isTarget ? pick(TARGET_COLORS, rand) : nearMiss ? pick(TARGET_COLORS, rand) : pick(COLORS, rand),
       roof: nearMiss ? pick(['#94a3b8', '#cbd5e1', '#475569'], rand) : pick(['#0f172a', '#1f2937', '#e2e8f0', '#93c5fd', '#fde68a'], rand),
       mirror: rand() > 0.5,
-      zone: zone.name,
+      zone: slot.zone,
       occluded: false,
       asset,
     });
@@ -387,7 +423,7 @@ function App() {
   }
 
   const currentTime = foundMs ?? elapsed;
-  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charging', occluded: false, asset: assetUrl('target-ioniq5-gpt-01.png') };
+  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charger-row', occluded: false, asset: assetUrl('target-ioniq5-gpt-01.png') };
 
   return (
     <main className="app-shell">
@@ -418,12 +454,13 @@ function App() {
       <section className="game-layout">
         <div className="playfield-wrap">
           <div className={`playfield ${foundMs !== null ? 'game-found' : ''}`} data-seed={seed}>
-            <div className="road road-main" />
-            <div className="road road-cross" />
-            <div className="road road-diagonal" />
+            <div className="parking-grid" />
+            <div className="drive-aisle aisle-top" />
+            <div className="drive-aisle aisle-mid" />
+            <div className="drive-aisle aisle-bottom" />
             <div className="zone charging-zone"><b>EV CHARGE</b></div>
             <div className="zone market-zone"><b>MARKET</b></div>
-            <div className="zone parking-zone"><b>P3</b></div>
+            <div className="zone parking-zone"><b>PARKING P3</b></div>
             {board.props.map((prop) => <ScenePropView key={prop.id} prop={prop} />)}
             {board.vehicles.map((car) => <CarSvg key={car.id} car={car} found={foundMs !== null} onPick={handlePick} />)}
             <div className="crowd-note">Fake EVs share color + silhouette. Real one has pixel lamps and “IONIQ 5”.</div>
