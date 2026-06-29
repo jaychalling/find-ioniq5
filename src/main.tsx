@@ -30,6 +30,7 @@ type Vehicle = {
   mirror: boolean;
   zone: ZoneName;
   occluded: boolean;
+  asset: string;
 };
 
 type SceneProp = {
@@ -72,6 +73,27 @@ const ZONES: Zone[] = [
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#64748b', '#111827', '#f8fafc', '#facc15', '#fb7185', '#2dd4bf', '#a3e635', '#38bdf8', '#cbd5e1', '#d1d5db'];
 const TARGET_COLORS = ['#e5e7eb', '#f8fafc', '#d6d3d1', '#cbd5e1', '#d8c9a5'];
 const PROP_LABELS = ['EV', 'P3', 'ION', '5', 'TAXI', 'BUS', 'EXIT', 'NO 5'];
+
+const ASSET_BASE = '/assets/cars/';
+const TARGET_ASSETS = ['target-ioniq5-white.png', 'target-ioniq5-silver.png'];
+const DISTRACTOR_ASSETS = ['ev-distractor-01.png', 'ev-distractor-02.png', 'ev-distractor-03.png', 'ev-distractor-04.png', 'ev-distractor-05.png', 'ev-distractor-06.png'];
+const NORMAL_ASSETS = ['car-01.png', 'car-02.png', 'car-03.png', 'car-04.png', 'car-05.png', 'car-06.png', 'car-07.png', 'car-08.png', 'car-09.png', 'car-10.png'];
+const TAXI_ASSETS = ['taxi-01.png', 'taxi-02.png', 'taxi-03.png'];
+const BUS_ASSETS = ['bus-01.png', 'bus-02.png'];
+const TRUCK_ASSETS = ['truck-01.png', 'truck-02.png'];
+
+function assetUrl(file: string) {
+  return `${ASSET_BASE}${file}`;
+}
+
+function vehicleAsset(kind: VehicleKind, rand: () => number) {
+  if (kind === 'target') return assetUrl(pick(TARGET_ASSETS, rand));
+  if (kind === 'ioniq-like') return assetUrl(pick(DISTRACTOR_ASSETS, rand));
+  if (kind === 'taxi') return assetUrl(pick(TAXI_ASSETS, rand));
+  if (kind === 'bus') return assetUrl(pick(BUS_ASSETS, rand));
+  if (kind === 'truck') return assetUrl(pick(TRUCK_ASSETS, rand));
+  return assetUrl(pick(NORMAL_ASSETS, rand));
+}
 
 function mulberry32(seed: number) {
   return function rand() {
@@ -156,9 +178,12 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
 
     const laneRotation = zone.lane ? pick([3, 6, 183, 186], rand) + (rand() - 0.5) * 4 : between(zone.rotation, rand);
 
+    const kind: VehicleKind = isTarget ? 'target' : nearMiss ? 'ioniq-like' : pick(kinds, rand);
+    const asset = vehicleAsset(kind, rand);
+
     vehicles.push({
       id: isTarget ? 'ioniq5-target' : `car-${i}`,
-      kind: isTarget ? 'target' : nearMiss ? 'ioniq-like' : pick(kinds, rand),
+      kind,
       x: Math.min(96, Math.max(4, point.x)),
       y: Math.min(93, Math.max(6, point.y)),
       rotation: laneRotation,
@@ -168,6 +193,7 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
       mirror: rand() > 0.5,
       zone: zone.name,
       occluded: false,
+      asset,
     });
   }
 
@@ -211,42 +237,9 @@ function saveScore(score: Score) {
   return next;
 }
 
-function IoniqShape({ car, preview = false }: { car: Vehicle; preview?: boolean }) {
-  const shineId = `shine-${car.id}`;
-  const isNearMiss = car.kind === 'ioniq-like';
-  return (
-    <svg viewBox="0 0 92 44" width="92" height="44" role="img" aria-hidden="true">
-      <defs>
-        <linearGradient id={shineId} x1="0" x2="1">
-          <stop offset="0" stopColor="rgba(255,255,255,.72)" />
-          <stop offset=".5" stopColor="rgba(255,255,255,.16)" />
-          <stop offset="1" stopColor="rgba(0,0,0,.18)" />
-        </linearGradient>
-      </defs>
-      <path d="M7 29 L18 13 L43 7 L70 10 L84 25 L80 34 L13 36 Z" fill={car.color} stroke="#0f172a" strokeWidth="2.1" />
-      <path d="M23 14 L43 9 L63 12 L71 23 L17 24 Z" fill={car.roof} opacity=".9" stroke="#0f172a" strokeWidth="1.35" />
-      <path d="M11 29 L82 25 L80 34 L13 36 Z" fill={`url(#${shineId})`} />
-      <path d="M21 26 L49 18 L72 23" fill="none" stroke="#334155" strokeWidth="1.7" opacity=".65" />
-      <g fill={isNearMiss ? '#fecaca' : '#fef3c7'}>
-        <rect x="10" y="24" width="4" height="4" />
-        <rect x="15" y="24" width="4" height="4" />
-        <rect x="73" y="23" width="4" height="4" />
-        <rect x="78" y="23" width="4" height="4" />
-      </g>
-      <g fill="#0f172a"><circle cx="25" cy="34" r="6" /><circle cx="66" cy="34" r="6" /></g>
-      <g fill="#e5e7eb"><circle cx="25" cy="34" r="2.55" /><circle cx="66" cy="34" r="2.55" /></g>
-      {!isNearMiss && <text x="35" y="32" fontSize="5.7" fontWeight="900" fill="#111827" letterSpacing=".65">IONIQ 5</text>}
-      {isNearMiss && <text x="38" y="32" fontSize="5.5" fontWeight="900" fill="#111827" letterSpacing=".65">EV</text>}
-      {preview && <circle cx="83" cy="10" r="4" fill="#22c55e" />}
-    </svg>
-  );
-}
-
-function CarSvg({ car, found, onPick, preview = false }: { car: Vehicle; found: boolean; onPick: (car: Vehicle) => void; preview?: boolean }) {
+function CarSvg({ car, found, onPick }: { car: Vehicle; found: boolean; onPick: (car: Vehicle) => void; preview?: boolean }) {
   const isTarget = car.kind === 'target';
   const isNearMiss = car.kind === 'ioniq-like';
-  const width = car.kind === 'bus' ? 88 : car.kind === 'truck' ? 82 : 72;
-  const height = car.kind === 'bus' ? 40 : 36;
   const label = isTarget ? 'Hyundai IONIQ 5 target' : isNearMiss ? 'IONIQ-like distractor' : `${car.kind} car`;
 
   return (
@@ -262,33 +255,7 @@ function CarSvg({ car, found, onPick, preview = false }: { car: Vehicle; found: 
         zIndex: Math.round(car.y * 10) + 20,
       }}
     >
-      {isTarget || isNearMiss ? <IoniqShape car={car} preview={preview} /> : (
-        <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-hidden="true">
-          <defs>
-            <linearGradient id={`shine-${car.id}`} x1="0" x2="1">
-              <stop offset="0" stopColor="rgba(255,255,255,.72)" />
-              <stop offset=".5" stopColor="rgba(255,255,255,.15)" />
-              <stop offset="1" stopColor="rgba(0,0,0,.18)" />
-            </linearGradient>
-          </defs>
-          {car.kind === 'bus' ? (
-            <path d="M6 9 Q6 5 10 5 L76 5 Q82 5 82 11 L82 28 L7 30 Z" fill={car.color} stroke="#172033" strokeWidth="1.8" />
-          ) : car.kind === 'truck' ? (
-            <path d="M5 19 L13 9 L47 9 L47 16 L72 16 L78 28 L10 30 Z" fill={car.color} stroke="#172033" strokeWidth="1.8" />
-          ) : (
-            <path d="M5 24 L14 12 L31 7 L55 11 L65 23 L61 29 L9 30 Z" fill={car.color} stroke="#172033" strokeWidth="1.8" />
-          )}
-          <path d={car.kind === 'bus' ? 'M13 9 H70 V19 H13 Z' : 'M18 13 L32 9 L50 13 L56 22 L13 22 Z'} fill={car.roof} opacity=".78" />
-          {car.kind === 'taxi' && <rect x="29" y="5" width="15" height="5" rx="2" fill="#fef08a" stroke="#111827" />}
-          <path d={car.kind === 'bus' ? 'M6 22 H82 V29 H7 Z' : 'M5 24 L65 23 L61 29 L9 30 Z'} fill={`url(#shine-${car.id})`} />
-          <circle cx={car.kind === 'bus' ? 20 : 19} cy={car.kind === 'bus' ? 29 : 29} r="5.2" fill="#0f172a" />
-          <circle cx={car.kind === 'bus' ? 68 : 53} cy={car.kind === 'bus' ? 29 : 29} r="5.2" fill="#0f172a" />
-          <circle cx={car.kind === 'bus' ? 20 : 19} cy={car.kind === 'bus' ? 29 : 29} r="2.1" fill="#e2e8f0" />
-          <circle cx={car.kind === 'bus' ? 68 : 53} cy={car.kind === 'bus' ? 29 : 29} r="2.1" fill="#e2e8f0" />
-          <rect x="8" y="22" width="4" height="3" fill="#fde68a" />
-          <rect x={car.kind === 'bus' ? 77 : 60} y="22" width="4" height="3" fill="#fca5a5" />
-        </svg>
-      )}
+      <img className="car-sprite" src={car.asset} alt="" draggable={false} />
     </button>
   );
 }
@@ -344,7 +311,7 @@ function App() {
     const region = regionName(board.target.x, board.target.y);
     const hints = [
       `구역 힌트: ${region}을 먼저 훑어보세요`,
-      `차량 힌트: ${board.target.color === '#d8c9a5' ? '골드/실버' : '화이트·실버'} 계열 각진 EV예요`,
+      `차량 힌트: ${board.target.asset.includes('silver') ? '실버' : '화이트'} 계열 각진 EV예요`,
       `디테일 힌트: 픽셀 램프 4개와 작은 IONIQ 5 글자를 찾으세요`,
     ];
     setHintText(hints[Math.min(next - 1, hints.length - 1)]);
@@ -381,7 +348,7 @@ function App() {
   }
 
   const currentTime = foundMs ?? elapsed;
-  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charging', occluded: false };
+  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charging', occluded: false, asset: assetUrl('target-ioniq5-white.png') };
 
   return (
     <main className="app-shell">

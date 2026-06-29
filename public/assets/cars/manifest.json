@@ -1,0 +1,102 @@
+[
+  {
+    "file": "target-ioniq5-white.png",
+    "type": "target"
+  },
+  {
+    "file": "target-ioniq5-silver.png",
+    "type": "target"
+  },
+  {
+    "file": "ev-distractor-01.png",
+    "type": "distractor"
+  },
+  {
+    "file": "ev-distractor-02.png",
+    "type": "distractor"
+  },
+  {
+    "file": "ev-distractor-03.png",
+    "type": "distractor"
+  },
+  {
+    "file": "ev-distractor-04.png",
+    "type": "distractor"
+  },
+  {
+    "file": "ev-distractor-05.png",
+    "type": "distractor"
+  },
+  {
+    "file": "ev-distractor-06.png",
+    "type": "distractor"
+  },
+  {
+    "file": "car-01.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-02.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-03.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-04.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-05.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-06.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-07.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-08.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-09.png",
+    "type": "normal"
+  },
+  {
+    "file": "car-10.png",
+    "type": "normal"
+  },
+  {
+    "file": "taxi-01.png",
+    "type": "taxi"
+  },
+  {
+    "file": "taxi-02.png",
+    "type": "taxi"
+  },
+  {
+    "file": "taxi-03.png",
+    "type": "taxi"
+  },
+  {
+    "file": "bus-01.png",
+    "type": "bus"
+  },
+  {
+    "file": "bus-02.png",
+    "type": "bus"
+  },
+  {
+    "file": "truck-01.png",
+    "type": "truck"
+  },
+  {
+    "file": "truck-02.png",
+    "type": "truck"
+  }
+]
