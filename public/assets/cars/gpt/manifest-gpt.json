@@ -1,0 +1,192 @@
+[
+  {
+    "file": "target-ioniq5-gpt-01.png",
+    "type": "target",
+    "source": "single-generation"
+  },
+  {
+    "file": "target-ioniq5-gpt-02.png",
+    "type": "target",
+    "source": "single-generation"
+  },
+  {
+    "file": "ev-distractor-gpt-01.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-02.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-03.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-04.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-05.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-06.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-07.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-08.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-09.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-10.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-11.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-12.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-13.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-14.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-15.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "ev-distractor-gpt-16.png",
+    "type": "distractor",
+    "source": "openai_codex_gpt-image-2-low_20260629_131121_9a0b6788.png"
+  },
+  {
+    "file": "car-gpt-01.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-02.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-03.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-04.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-05.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-06.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-07.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-08.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-09.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-10.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-11.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-12.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "car-gpt-13.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "taxi-gpt-01.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "taxi-gpt-02.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "bus-gpt-01.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "bus-gpt-02.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "truck-gpt-01.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "truck-gpt-02.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  },
+  {
+    "file": "truck-gpt-03.png",
+    "type": "normal",
+    "source": "openai_codex_gpt-image-2-low_20260629_130829_9194916e.png"
+  }
+]

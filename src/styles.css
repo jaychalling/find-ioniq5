@@ -51,7 +51,8 @@ h1 { margin: 0; font-size: clamp(22px, 3vw, 38px); line-height: 1; letter-spacin
 .hint-ribbon small { color: #fed7aa; margin-left: 6px; }
 
 .car { position: absolute; display: block; border: 0; padding: 0; background: transparent; transform-origin: center; filter: drop-shadow(0 8px 5px rgba(0,0,0,.34)); transition: filter .14s ease, opacity .2s ease; }
-.car-sprite { display: block; width: 96px; height: auto; pointer-events: none; user-select: none; image-rendering: auto; }
+.car-sprite { display: block; width: 118px; height: auto; pointer-events: none; user-select: none; image-rendering: auto; }
+.car.target-car .car-sprite, .car.near-miss .car-sprite { width: 126px; }
 .car:hover { filter: drop-shadow(0 0 9px rgba(125,211,252,.85)) drop-shadow(0 8px 5px rgba(0,0,0,.34)); }
 .car:focus-visible { outline: 3px solid #38bdf8; outline-offset: 8px; border-radius: 18px; }
 .target-car { cursor: crosshair; }
@@ -110,8 +111,8 @@ h1 { margin: 0; font-size: clamp(22px, 3vw, 38px); line-height: 1; letter-spacin
   .hud-strip div { min-width: 72px; }
   .difficulty-tabs { display: grid; grid-template-columns: 1fr; }
   .playfield { height: 620px; }
-  .playfield .car { scale: .72; }
-  .playfield .scene-prop { scale: .78; }
+  .playfield .car { scale: .66; }
+  .playfield .scene-prop { scale: .72; }
   .crowd-note { display: none; }
 }
 

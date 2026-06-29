@@ -56,9 +56,9 @@ type Zone = {
 };
 
 const DIFFICULTY: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'Easy', cars: 48, nearMisses: 2, clutter: 12, targetScale: 1.18, missPenalty: 350, hintPenalty: 2200, hint: '깔끔한 입문' },
-  normal: { label: 'Normal', cars: 84, nearMisses: 5, clutter: 20, targetScale: 1.08, missPenalty: 450, hintPenalty: 3200, hint: '적당한 혼잡도' },
-  hard: { label: 'Hard', cars: 132, nearMisses: 10, clutter: 34, targetScale: 1.0, missPenalty: 650, hintPenalty: 4800, hint: '많지만 안 엉킴' },
+  easy: { label: 'Easy', cars: 40, nearMisses: 2, clutter: 8, targetScale: 0.98, missPenalty: 350, hintPenalty: 2200, hint: '깔끔한 입문' },
+  normal: { label: 'Normal', cars: 62, nearMisses: 6, clutter: 14, targetScale: 0.9, missPenalty: 450, hintPenalty: 3200, hint: '왈도풍 밀도' },
+  hard: { label: 'Hard', cars: 92, nearMisses: 12, clutter: 22, targetScale: 0.84, missPenalty: 650, hintPenalty: 4800, hint: '비슷한 EV 많음' },
 };
 
 const ZONES: Zone[] = [
@@ -74,16 +74,16 @@ const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b8a6'
 const TARGET_COLORS = ['#e5e7eb', '#f8fafc', '#d6d3d1', '#cbd5e1', '#d8c9a5'];
 const PROP_LABELS = ['EV', 'P3', 'ION', '5', 'TAXI', 'BUS', 'EXIT', 'NO 5'];
 
-const ASSET_BASE = '/assets/cars/';
-const TARGET_ASSETS = ['target-ioniq5-white.png', 'target-ioniq5-silver.png'];
-const DISTRACTOR_ASSETS = ['ev-distractor-01.png', 'ev-distractor-02.png', 'ev-distractor-03.png', 'ev-distractor-04.png', 'ev-distractor-05.png', 'ev-distractor-06.png'];
-const NORMAL_ASSETS = ['car-01.png', 'car-02.png', 'car-03.png', 'car-04.png', 'car-05.png', 'car-06.png', 'car-07.png', 'car-08.png', 'car-09.png', 'car-10.png'];
-const TAXI_ASSETS = ['taxi-01.png', 'taxi-02.png', 'taxi-03.png'];
-const BUS_ASSETS = ['bus-01.png', 'bus-02.png'];
-const TRUCK_ASSETS = ['truck-01.png', 'truck-02.png'];
+const GPT_ASSET_BASE = '/assets/cars/gpt/';
+const TARGET_ASSETS = ['target-ioniq5-gpt-01.png', 'target-ioniq5-gpt-02.png'];
+const DISTRACTOR_ASSETS = ['ev-distractor-gpt-01.png', 'ev-distractor-gpt-02.png', 'ev-distractor-gpt-03.png', 'ev-distractor-gpt-04.png', 'ev-distractor-gpt-05.png', 'ev-distractor-gpt-06.png', 'ev-distractor-gpt-07.png', 'ev-distractor-gpt-08.png', 'ev-distractor-gpt-09.png', 'ev-distractor-gpt-10.png', 'ev-distractor-gpt-11.png', 'ev-distractor-gpt-12.png', 'ev-distractor-gpt-13.png', 'ev-distractor-gpt-14.png', 'ev-distractor-gpt-15.png', 'ev-distractor-gpt-16.png'];
+const NORMAL_ASSETS = ['car-gpt-01.png', 'car-gpt-02.png', 'car-gpt-03.png', 'car-gpt-04.png', 'car-gpt-05.png', 'car-gpt-06.png', 'car-gpt-07.png', 'car-gpt-08.png', 'car-gpt-09.png', 'car-gpt-10.png', 'car-gpt-11.png', 'car-gpt-12.png', 'car-gpt-13.png'];
+const TAXI_ASSETS = ['taxi-gpt-01.png', 'taxi-gpt-02.png'];
+const BUS_ASSETS = ['bus-gpt-01.png', 'bus-gpt-02.png'];
+const TRUCK_ASSETS = ['truck-gpt-01.png', 'truck-gpt-02.png', 'truck-gpt-03.png'];
 
 function assetUrl(file: string) {
-  return `${ASSET_BASE}${file}`;
+  return `${GPT_ASSET_BASE}${file}`;
 }
 
 function vehicleAsset(kind: VehicleKind, rand: () => number) {
@@ -132,6 +132,54 @@ function distance(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+function vehicleFootprint(scale: number, difficulty: Difficulty) {
+  const squeeze = difficulty === 'hard' ? 0.96 : difficulty === 'normal' ? 1.08 : 1.2;
+  return { x: 5.3 * scale * squeeze, y: 7.0 * scale * squeeze };
+}
+
+function vehiclesOverlap(a: { x: number; y: number; scale: number }, b: { x: number; y: number; scale: number }, difficulty: Difficulty) {
+  const af = vehicleFootprint(a.scale, difficulty);
+  const bf = vehicleFootprint(b.scale, difficulty);
+  const dx = Math.abs(a.x - b.x);
+  const dy = Math.abs(a.y - b.y);
+  return dx < af.x + bf.x && dy < af.y + bf.y;
+}
+
+function findVehicleSpot(
+  vehicles: Vehicle[],
+  zoneCounts: Record<ZoneName, number>,
+  rand: () => number,
+  difficulty: Difficulty,
+  scale: number,
+  protectedTarget: boolean,
+) {
+  let best: { zone: Zone; point: { x: number; y: number }; score: number } | null = null;
+  const attempts = difficulty === 'hard' ? 140 : 180;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const zone = weightedZone(rand);
+    const point = zoneSlot(zone, zoneCounts[zone.name] + attempt, rand, difficulty);
+    const candidate = { x: Math.min(96, Math.max(4, point.x)), y: Math.min(93, Math.max(6, point.y)), scale };
+    const blockers = vehicles.filter((other) => protectedTarget || other.kind === 'target' || other.kind === 'ioniq-like' || distance(candidate, other) < 18);
+    const collisions = blockers.filter((other) => vehiclesOverlap(candidate, other, difficulty));
+
+    if (collisions.length === 0) {
+      zoneCounts[zone.name] += 1;
+      return { zone, point: candidate };
+    }
+
+    const nearest = blockers.reduce((min, other) => Math.min(min, distance(candidate, other)), Number.POSITIVE_INFINITY);
+    const score = collisions.length * 100 - nearest;
+    if (!best || score < best.score) best = { zone, point: candidate, score };
+  }
+
+  // Dense hard boards can exhaust perfect slots. Use the least-bad slot instead
+  // of stacking every failed candidate in one zone.
+  const fallback = best ?? { zone: weightedZone(rand), point: { x: 50, y: 50, scale }, score: 0 };
+  zoneCounts[fallback.zone.name] += 1;
+  return { zone: fallback.zone, point: fallback.point };
+}
+
 function zoneSlot(zone: Zone, index: number, rand: () => number, difficulty: Difficulty) {
   const width = zone.x[1] - zone.x[0];
   const height = zone.y[1] - zone.y[0];
@@ -157,7 +205,6 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
   const targetIndex = Math.floor(rand() * config.cars);
   const nearMissSlots = new Set<number>();
   const zoneCounts: Record<ZoneName, number> = { charging: 0, market: 0, avenue: 0, parking: 0, alley: 0, intersection: 0 };
-  const minGap = difficulty === 'hard' ? 4.8 : difficulty === 'normal' ? 5.9 : 7.2;
 
   while (nearMissSlots.size < config.nearMisses) {
     const slot = Math.floor(rand() * config.cars);
@@ -167,27 +214,19 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
   for (let i = 0; i < config.cars; i += 1) {
     const isTarget = i === targetIndex;
     const nearMiss = nearMissSlots.has(i);
-    let zone = weightedZone(rand);
-    let point = zoneSlot(zone, zoneCounts[zone.name]++, rand, difficulty);
-
-    for (let attempt = 0; attempt < 28; attempt += 1) {
-      if (vehicles.every((other) => distance(point, other) > (isTarget || other.kind === 'target' ? minGap + 1.8 : minGap))) break;
-      zone = weightedZone(rand);
-      point = zoneSlot(zone, zoneCounts[zone.name]++, rand, difficulty);
-    }
-
-    const laneRotation = zone.lane ? pick([3, 6, 183, 186], rand) + (rand() - 0.5) * 4 : between(zone.rotation, rand);
-
     const kind: VehicleKind = isTarget ? 'target' : nearMiss ? 'ioniq-like' : pick(kinds, rand);
+    const scale = isTarget ? config.targetScale : nearMiss ? 0.78 + rand() * 0.12 : 0.5 + rand() * 0.16;
+    const { zone, point } = findVehicleSpot(vehicles, zoneCounts, rand, difficulty, scale, isTarget || nearMiss);
+    const laneRotation = zone.lane ? pick([3, 6, 183, 186], rand) + (rand() - 0.5) * 4 : between(zone.rotation, rand);
     const asset = vehicleAsset(kind, rand);
 
     vehicles.push({
       id: isTarget ? 'ioniq5-target' : `car-${i}`,
       kind,
-      x: Math.min(96, Math.max(4, point.x)),
-      y: Math.min(93, Math.max(6, point.y)),
+      x: point.x,
+      y: point.y,
       rotation: laneRotation,
-      scale: isTarget ? config.targetScale : nearMiss ? 0.9 + rand() * 0.16 : 0.58 + rand() * 0.22,
+      scale,
       color: isTarget ? pick(TARGET_COLORS, rand) : nearMiss ? pick(TARGET_COLORS, rand) : pick(COLORS, rand),
       roof: nearMiss ? pick(['#94a3b8', '#cbd5e1', '#475569'], rand) : pick(['#0f172a', '#1f2937', '#e2e8f0', '#93c5fd', '#fde68a'], rand),
       mirror: rand() > 0.5,
@@ -348,7 +387,7 @@ function App() {
   }
 
   const currentTime = foundMs ?? elapsed;
-  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charging', occluded: false, asset: assetUrl('target-ioniq5-white.png') };
+  const targetPreview: Vehicle = { id: 'preview', kind: 'target', x: 50, y: 50, rotation: 0, scale: 1, color: '#e5e7eb', roof: '#94a3b8', mirror: false, zone: 'charging', occluded: false, asset: assetUrl('target-ioniq5-gpt-01.png') };
 
   return (
     <main className="app-shell">
