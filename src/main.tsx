@@ -55,9 +55,9 @@ type Zone = {
 };
 
 const DIFFICULTY: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'Easy', cars: 86, nearMisses: 3, clutter: 34, targetScale: 1.1, missPenalty: 350, hintPenalty: 2200, hint: '유사차 적음' },
-  normal: { label: 'Normal', cars: 165, nearMisses: 9, clutter: 62, targetScale: 1.0, missPenalty: 450, hintPenalty: 3200, hint: '도시 혼잡도' },
-  hard: { label: 'Hard', cars: 255, nearMisses: 22, clutter: 95, targetScale: 0.92, missPenalty: 650, hintPenalty: 4800, hint: '왈도급 유사차' },
+  easy: { label: 'Easy', cars: 48, nearMisses: 2, clutter: 12, targetScale: 1.18, missPenalty: 350, hintPenalty: 2200, hint: '깔끔한 입문' },
+  normal: { label: 'Normal', cars: 84, nearMisses: 5, clutter: 20, targetScale: 1.08, missPenalty: 450, hintPenalty: 3200, hint: '적당한 혼잡도' },
+  hard: { label: 'Hard', cars: 132, nearMisses: 10, clutter: 34, targetScale: 1.0, missPenalty: 650, hintPenalty: 4800, hint: '많지만 안 엉킴' },
 };
 
 const ZONES: Zone[] = [
@@ -106,6 +106,27 @@ function regionName(x: number, y: number) {
   return `${vertical} ${horizontal}`;
 }
 
+function distance(a: { x: number; y: number }, b: { x: number; y: number }) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function zoneSlot(zone: Zone, index: number, rand: () => number, difficulty: Difficulty) {
+  const width = zone.x[1] - zone.x[0];
+  const height = zone.y[1] - zone.y[0];
+  const cols = Math.max(3, Math.floor(width / (difficulty === 'hard' ? 8.5 : 10.5)));
+  const rows = Math.max(2, Math.floor(height / (difficulty === 'hard' ? 8.2 : 10.2)));
+  const col = index % cols;
+  const row = Math.floor(index / cols) % rows;
+  const cellW = width / cols;
+  const cellH = height / rows;
+  const jitter = difficulty === 'hard' ? 0.34 : 0.25;
+
+  return {
+    x: zone.x[0] + cellW * (col + 0.5) + (rand() - 0.5) * cellW * jitter,
+    y: zone.y[0] + cellH * (row + 0.5) + (rand() - 0.5) * cellH * jitter,
+  };
+}
+
 function generateVehicles(seed: number, difficulty: Difficulty): Board {
   const rand = mulberry32(seed);
   const config = DIFFICULTY[difficulty];
@@ -113,6 +134,8 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
   const kinds: VehicleKind[] = ['sedan', 'hatch', 'van', 'truck', 'taxi', 'bus'];
   const targetIndex = Math.floor(rand() * config.cars);
   const nearMissSlots = new Set<number>();
+  const zoneCounts: Record<ZoneName, number> = { charging: 0, market: 0, avenue: 0, parking: 0, alley: 0, intersection: 0 };
+  const minGap = difficulty === 'hard' ? 4.8 : difficulty === 'normal' ? 5.9 : 7.2;
 
   while (nearMissSlots.size < config.nearMisses) {
     const slot = Math.floor(rand() * config.cars);
@@ -120,43 +143,49 @@ function generateVehicles(seed: number, difficulty: Difficulty): Board {
   }
 
   for (let i = 0; i < config.cars; i += 1) {
-    const zone = weightedZone(rand);
     const isTarget = i === targetIndex;
     const nearMiss = nearMissSlots.has(i);
-    const laneOffset = zone.lane ? Math.floor(rand() * 8) * 8.6 : 0;
-    const x = Math.min(97, Math.max(3, between(zone.x, rand) + (zone.lane ? (rand() - 0.5) * 4.2 : 0)));
-    const y = Math.min(94, Math.max(5, zone.lane ? 13 + laneOffset + (rand() - 0.5) * 3.5 : between(zone.y, rand)));
-    const rot = zone.lane ? between(zone.rotation, rand) + (rand() > 0.5 ? 0 : 180) : between(zone.rotation, rand);
-    const neutral = rand() > 0.45;
+    let zone = weightedZone(rand);
+    let point = zoneSlot(zone, zoneCounts[zone.name]++, rand, difficulty);
+
+    for (let attempt = 0; attempt < 28; attempt += 1) {
+      if (vehicles.every((other) => distance(point, other) > (isTarget || other.kind === 'target' ? minGap + 1.8 : minGap))) break;
+      zone = weightedZone(rand);
+      point = zoneSlot(zone, zoneCounts[zone.name]++, rand, difficulty);
+    }
+
+    const laneRotation = zone.lane ? pick([3, 6, 183, 186], rand) + (rand() - 0.5) * 4 : between(zone.rotation, rand);
 
     vehicles.push({
       id: isTarget ? 'ioniq5-target' : `car-${i}`,
       kind: isTarget ? 'target' : nearMiss ? 'ioniq-like' : pick(kinds, rand),
-      x,
-      y,
-      rotation: rot,
-      scale: isTarget ? config.targetScale : nearMiss ? 0.86 + rand() * 0.38 : 0.66 + rand() * 0.55,
+      x: Math.min(96, Math.max(4, point.x)),
+      y: Math.min(93, Math.max(6, point.y)),
+      rotation: laneRotation,
+      scale: isTarget ? config.targetScale : nearMiss ? 0.9 + rand() * 0.16 : 0.58 + rand() * 0.22,
       color: isTarget ? pick(TARGET_COLORS, rand) : nearMiss ? pick(TARGET_COLORS, rand) : pick(COLORS, rand),
       roof: nearMiss ? pick(['#94a3b8', '#cbd5e1', '#475569'], rand) : pick(['#0f172a', '#1f2937', '#e2e8f0', '#93c5fd', '#fde68a'], rand),
       mirror: rand() > 0.5,
       zone: zone.name,
-      occluded: !isTarget && (nearMiss ? rand() < 0.24 : rand() < (difficulty === 'hard' ? 0.18 : 0.08)) && neutral,
+      occluded: false,
     });
   }
 
-  const props: SceneProp[] = Array.from({ length: config.clutter }, (_, i) => {
+  const props: SceneProp[] = [];
+  for (let i = 0; i < config.clutter; i += 1) {
     const zone = weightedZone(rand);
     const kind = pick<PropKind>(['cone', 'person', 'charger', 'sign', 'cart', 'tree', 'crosswalk'], rand);
-    return {
+    const point = zoneSlot(zone, zoneCounts[zone.name]++, rand, difficulty);
+    props.push({
       id: `prop-${i}`,
       kind,
-      x: Math.min(97, Math.max(3, between(zone.x, rand))),
-      y: Math.min(94, Math.max(5, between(zone.y, rand))),
+      x: Math.min(96, Math.max(4, point.x)),
+      y: Math.min(93, Math.max(6, point.y)),
       rotation: between(zone.rotation, rand),
-      scale: 0.7 + rand() * 0.75,
+      scale: 0.45 + rand() * 0.28,
       label: kind === 'sign' ? pick(PROP_LABELS, rand) : undefined,
-    };
-  });
+    });
+  }
 
   const sortedVehicles = vehicles.sort((a, b) => a.y - b.y);
   const target = sortedVehicles.find((car) => car.kind === 'target')!;
@@ -271,7 +300,7 @@ function ScenePropView({ prop }: { prop: SceneProp }) {
 function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   const [seed, setSeed] = useState(() => Date.now() % 1_000_000);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(() => performance.now());
   const [elapsed, setElapsed] = useState(0);
   const [foundMs, setFoundMs] = useState<number | null>(null);
   const [misses, setMisses] = useState(0);
